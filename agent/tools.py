@@ -1,60 +1,70 @@
-"""Cliente del bridge OMX (HTTP). Reusable para varios robots/casos."""
-import json
-import urllib.request
-import urllib.error
+"""Fachada al adapter activo (configurable por robot)."""
+from __future__ import annotations
 
-BRIDGE = 'http://localhost:8000'
-LIMITS = {
-    'joint1': (-4.71, 6.28),
-    'joint2': (-2.09, 1.57),
-    'joint3': (-2.09, 1.57),
-    'joint4': (-1.74, 1.74),
-    'joint5': (-4.71, 4.71),
-}
-NAMES = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5']
+from .context import get_adapter, get_profile
 
 
-def _req(method, path, body=None, timeout=30):
-    data = json.dumps(body).encode() if body is not None else None
-    r = urllib.request.Request(BRIDGE + path, data=data, method=method,
-                               headers={'Content-Type': 'application/json'})
-    try:
-        with urllib.request.urlopen(r, timeout=timeout) as f:
-            return json.loads(f.read().decode())
-    except urllib.error.HTTPError as e:
-        detail = e.read().decode()[:300]
-        raise RuntimeError(f'{path} -> HTTP {e.code}: {detail}')
+def bridge_url() -> str:
+    return get_adapter()._config.base_url
+
+
+def get_limits():
+    return get_profile().limits
+
+
+def get_joint_names():
+    return get_profile().joint_names
 
 
 def get_state():
-    return _req('GET', '/state', timeout=10)
+    return get_adapter().get_state()
 
 
 def health():
-    return _req('GET', '/health', timeout=5)
+    return get_adapter().health()
 
 
 def move_joints(q, seconds=4.0):
-    return _req('POST', '/move_joints', {'joints': list(q), 'seconds': seconds},
-                timeout=seconds + 25)
+    return get_adapter().move_joints(list(q), seconds)
 
 
 def home():
-    return _req('POST', '/home', timeout=30)
+    return get_adapter().home()
 
 
 def init():
-    return _req('POST', '/init', timeout=30)
+    return get_adapter().init()
 
 
 def gripper(open01, seconds=2.0):
-    return _req('POST', '/gripper', {'open': open01, 'seconds': seconds}, timeout=20)
+    return get_adapter().gripper(open01, seconds)
+
+
+def torque(on: bool):
+    return get_adapter().torque(on)
+
+
+def read_arm_positions(state: dict | None = None) -> list[float]:
+    st = state if state is not None else get_state()
+    key = get_profile().state_arm_key
+    arm = st.get(key, st.get('arm'))
+    if arm is None:
+        raise KeyError(f'estado sin clave "{key}" ni "arm"')
+    return list(arm)
+
+
+def read_gripper(state: dict | None = None) -> float:
+    st = state if state is not None else get_state()
+    key = get_profile().state_gripper_key
+    return float(st.get(key, st.get('gripper', 0.0)))
 
 
 def validate(q):
+    names = get_joint_names()
+    limits = get_limits()
     bad = []
-    for n, v in zip(NAMES, q):
-        lo, hi = LIMITS[n]
+    for n, v in zip(names, q):
+        lo, hi = limits[n]
         if not (lo <= v <= hi):
             bad.append(f'{n}={v} fuera de [{lo},{hi}]')
     return bad

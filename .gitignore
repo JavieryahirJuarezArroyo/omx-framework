@@ -1,5 +1,10 @@
 agent/.env
 agent/llm.log
+agent/.checkpoints/
+.venv/
 __pycache__/
 *.pyc
 chat.log
+*.egg-info/
+dist/
+build/

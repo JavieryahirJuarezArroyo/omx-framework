@@ -1,0 +1,67 @@
+{
+  "robot": {
+    "id": "turtlesim",
+    "display_name": "ROS 2 turtlesim",
+    "dof": 3,
+    "joint_names": ["x", "y", "theta"],
+    "limits": {
+      "x": [-2.0, 2.0],
+      "y": [-2.0, 2.0],
+      "theta": [-3.14159, 3.14159]
+    },
+    "home_pose": [5.544, 5.544, 0.0],
+    "init_pose": [5.544, 5.544, 0.0]
+  },
+  "capabilities": {
+    "gripper": false,
+    "torque": false,
+    "home": true,
+    "init": false
+  },
+  "adapter": {
+    "type": "http",
+    "base_url": "http://127.0.0.1:18000"
+  },
+  "agent": {
+    "tools": "auto",
+    "ros": {
+      "interfaces": [
+        {
+          "kind": "topic_sub",
+          "name": "/turtle1/pose",
+          "msg_type": "turtlesim/msg/Pose"
+        },
+        {
+          "kind": "topic_pub",
+          "name": "/turtle1/cmd_vel",
+          "msg_type": "geometry_msgs/msg/Twist"
+        },
+        {
+          "kind": "service",
+          "name": "/reset",
+          "srv_type": "std_srvs/srv/Empty"
+        }
+      ],
+      "state": { "representation": "pose_2d" },
+      "motion": {
+        "kind": "velocity_timed",
+        "duration_param": "seconds",
+        "inputs": [
+          { "name": "linear_x", "unit": "m/s", "bridge_index": 0 },
+          { "name": "angular_z", "unit": "rad/s", "bridge_index": 1, "default": 0 }
+        ]
+      }
+    },
+    "behavior": {
+      "rules": [
+        "La tortuga NO puede ir de lado: solo avanza/retrocede (linear_x) y gira sobre sí misma (angular_z).",
+        "linear_x y angular_z son en el marco de la tortuga: linear_x>0 = adelante según su cabeza, NO 'derecha del mapa'.",
+        "'Derecha' o 'izquierda' del usuario = GIRAR: izquierda angular_z≈+0.5 rad/s, derecha angular_z≈-0.5 rad/s, seconds 1–3; luego get_pose.",
+        "'Ir hacia la derecha del mapa' o a un punto: get_pose; calcula si hace falta girar (theta); gira; luego drive con linear_x>0 unos segundos; repite en pasos cortos.",
+        "Si la orden es ambigua, haz un paso pequeño, get_pose, y explica al usuario qué hiciste.",
+        "Pasos cortos: seconds 2–4, linear_x 0.2–0.35; evita un solo drive de 10 s salvo que pidan distancia explícita."
+      ]
+    },
+    "system_prompt_extra": "Mapa ~11×11 m (x,y en metros, theta rad). reset_sim → centro ~(5.54,5.54). En la UI, +y es arriba del canvas."
+  }
+}

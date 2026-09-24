@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""OMX-F bridge: ROS2 Jazzy (zenoh) -> HTTP.
+"""Ejemplo de bridge: OpenMANIPULATOR OMX-F (ROS2 Jazzy/zenoh) -> HTTP REST.
+
+Implementa el contrato documentado en bridge/README.md.
 Corre DENTRO del container open_manipulator en /workspace.
   python3 /workspace/omx_bridge.py  (puerto 8000, host network)
 

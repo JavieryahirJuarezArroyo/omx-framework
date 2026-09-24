@@ -1,0 +1,36 @@
+{
+  "robot": {
+    "id": "generic_arm",
+    "display_name": "Brazo manipulador genérico",
+    "dof": 6,
+    "joint_names": ["joint1", "joint2", "joint3", "joint4", "joint5", "joint6"],
+    "limits": {
+      "joint1": [-3.14, 3.14],
+      "joint2": [-3.14, 3.14],
+      "joint3": [-3.14, 3.14],
+      "joint4": [-3.14, 3.14],
+      "joint5": [-3.14, 3.14],
+      "joint6": [-3.14, 3.14]
+    },
+    "home_pose": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    "init_pose": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  },
+  "capabilities": {
+    "gripper": true,
+    "torque": false,
+    "home": true,
+    "init": true
+  },
+  "adapter": {
+    "type": "http",
+    "base_url": "http://localhost:8000"
+  },
+  "agent": {
+    "tools": "auto",
+    "ros": {
+      "state": { "representation": "joints" },
+      "motion": { "kind": "joint_positions" }
+    },
+    "system_prompt_extra": "Ajusta limits y DOF a tu URDF; el bridge debe implementar el contrato REST estándar."
+  }
+}

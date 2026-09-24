@@ -1,0 +1,45 @@
+{
+  "robot": {
+    "id": "open_manipulator_omx_f",
+    "display_name": "OpenMANIPULATOR OMX-F (ejemplo)",
+    "dof": 5,
+    "joint_names": ["joint1", "joint2", "joint3", "joint4", "joint5"],
+    "limits": {
+      "joint1": [-4.71, 6.28],
+      "joint2": [-2.09, 1.57],
+      "joint3": [-2.09, 1.57],
+      "joint4": [-1.74, 1.74],
+      "joint5": [-4.71, 4.71]
+    },
+    "home_pose": [0.0, -1.57, 1.57, 1.57, 0.0],
+    "init_pose": [0.0, 0.0, 0.0, 0.0, 0.0],
+    "known_joint_hints": {
+      "4": "OJO: joint4/ID14 puede quedar pegado por overload; revisa mecanica antes de insistir."
+    }
+  },
+  "capabilities": {
+    "gripper": true,
+    "torque": true,
+    "home": true,
+    "init": true
+  },
+  "adapter": {
+    "type": "http",
+    "base_url": "http://localhost:8000"
+  },
+  "agent": {
+    "tools": "auto",
+    "ros": {
+      "interfaces": [
+        {
+          "kind": "topic_sub",
+          "name": "/joint_states",
+          "msg_type": "sensor_msgs/msg/JointState"
+        }
+      ],
+      "state": { "representation": "joints" },
+      "motion": { "kind": "joint_positions", "duration_param": "seconds" }
+    },
+    "system_prompt_extra": "Brazo serial ROBOTIS vía bridge ROS 2 en Docker."
+  }
+}
