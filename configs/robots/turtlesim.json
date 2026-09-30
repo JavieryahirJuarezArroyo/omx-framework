@@ -19,11 +19,12 @@
     "init": false
   },
   "adapter": {
-    "type": "http",
-    "base_url": "http://127.0.0.1:18000"
+    "type": "ros2",
+    "node_name": "ros_agent_bridge"
   },
   "agent": {
     "tools": "auto",
+    "introspection": true,
     "ros": {
       "interfaces": [
         {

@@ -1,6 +1,6 @@
 """Chat UI sin dependencias: http.server stdlib + HTML.
 Uso:  python3 -m agent.server  (puerto 8501)
-LangGraph agent (LLM obligatorio) + bridge HTTP al robot.
+LangGraph agent (LLM obligatorio) + nodo ROS 2 (rclpy) en el mismo proceso.
 """
 import json
 import os
@@ -36,7 +36,7 @@ button{padding:10px 14px;border-radius:8px;border:0;background:#0b5fa5;color:#ff
 <h2 id="title">ROS Agent · chat</h2>
 <div id="vizbox"><h3>Vista turtlesim (posición en vivo)</h3>
 <canvas id="turtleCanvas" width="440" height="440"></canvas>
-<p id="vizhint">Mapa 11×11 m (como turtlesim). Se actualiza al mover con el agente.</p></div>
+<p id="vizhint">Mapa 11×11 m en el chat (no es la ventana Qt de turtlesim). En Docker la sim corre en headless; aquí ves la posición en vivo. Ventana clásica: <code>run-turtlesim-visual.ps1</code> + VcXsrv.</p></div>
 <div id="log"></div>
 <div class="chips" id="chips">
 <button data-t="estado">estado</button>
@@ -61,16 +61,18 @@ async function send(t){
   const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});
   const j=await r.json(); add('bot',j.reply||JSON.stringify(j)); refresh();
 }
-function drawTurtle(x,y,theta){
+function drawTurtle(x,y,theta,waiting){
   const cw=tcanvas.width, ch=tcanvas.height, s=cw/W;
   tctx.fillStyle='#005f99'; tctx.fillRect(0,0,cw,ch);
   tctx.strokeStyle='rgba(255,255,255,.15)'; tctx.lineWidth=1;
   for(let i=0;i<=W;i++){tctx.beginPath();tctx.moveTo(i*s,0);tctx.lineTo(i*s,ch);tctx.stroke();tctx.beginPath();tctx.moveTo(0,i*s);tctx.lineTo(cw,i*s);tctx.stroke();}
   const px=x*s, py=ch-y*s, L=14;
   tctx.save(); tctx.translate(px,py); tctx.rotate(-theta);
-  tctx.fillStyle='#2ecc71'; tctx.beginPath(); tctx.moveTo(L,0); tctx.lineTo(-L*.6,L*.5); tctx.lineTo(-L*.6,-L*.5); tctx.closePath(); tctx.fill();
+  tctx.fillStyle=waiting?'#95a5a6':'#2ecc71'; tctx.beginPath(); tctx.moveTo(L,0); tctx.lineTo(-L*.6,L*.5); tctx.lineTo(-L*.6,-L*.5); tctx.closePath(); tctx.fill();
   tctx.restore();
-  tctx.fillStyle='#eee'; tctx.font='12px system-ui'; tctx.fillText('x='+x.toFixed(2)+' y='+y.toFixed(2)+' θ='+theta.toFixed(2),8,ch-10);
+  tctx.fillStyle='#eee'; tctx.font='12px system-ui';
+  const hint=waiting?' — sin pose ROS; usa Docker o turtlesim_node':'';
+  tctx.fillText('x='+x.toFixed(2)+' y='+y.toFixed(2)+' θ='+theta.toFixed(2)+hint,8,ch-10);
 }
 function setupChips(id){
   const el=document.getElementById('chips');
@@ -81,22 +83,40 @@ function setupChips(id){
   el.querySelectorAll('button').forEach(b=>b.onclick=()=>send(b.dataset.t));
 }
 async function refresh(){
-  try{const r=await fetch('/api/state');const j=await r.json();
+  try{
+    const r=await fetch('/api/state');
+    const j=await r.json();
+    if(j.error){
+      st.textContent='ROS: '+j.error;
+      if(robotId==='turtlesim') drawTurtle(5.544,5.544,0,true);
+      return;
+    }
     const arm=j.arm||j.joints||[]; const g=j.gripper!=null?j.gripper:'—';
-    st.textContent='joints: '+JSON.stringify(arm)+' gripper: '+g;
-    if(robotId==='turtlesim'&&arm.length>=3) drawTurtle(arm[0],arm[1],arm[2]);
-  }catch(e){st.textContent='bridge no disponible (revisa ROS_AGENT_BRIDGE)'}
+    st.textContent='pose: '+JSON.stringify(arm)+' gripper: '+g;
+    if(robotId==='turtlesim'){
+      if(arm.length>=3) drawTurtle(arm[0],arm[1],arm[2],false);
+      else drawTurtle(5.544,5.544,0,true);
+    }
+  }catch(e){
+    st.textContent='ROS no disponible: '+e;
+    if(robotId==='turtlesim') drawTurtle(5.544,5.544,0,true);
+  }
 }
 inp.addEventListener('keydown',e=>{if(e.key==='Enter')send()});
 fetch('/api/mode').then(r=>r.json()).then(j=>{md.textContent='Modo: '+j.mode+' · LLM: '+(j.provider||'?')+(j.model?' · '+j.model:'');}).catch(()=>{});
 fetch('/api/robot').then(r=>r.json()).then(j=>{
   document.getElementById('title').textContent=j.display_name+' · chat';
-  md.textContent+=' · '+j.id+' · '+j.bridge;
+  md.textContent+=' · '+j.id+' · adapter '+j.adapter+' · '+j.ros_node;
   robotId=j.id||'';
   setupChips(robotId);
-  if(robotId==='turtlesim'){vizbox.style.display='block'; if(vizTimer)clearInterval(vizTimer); vizTimer=setInterval(refresh,400);}
+  if(robotId==='turtlesim'){
+    vizbox.style.display='block';
+    drawTurtle(5.544,5.544,0,true);
+    if(vizTimer)clearInterval(vizTimer);
+    vizTimer=setInterval(refresh,400);
+  }
 }).catch(()=>{});
-add('sys','Agente LLM + bridge HTTP. Escribe en lenguaje natural o usa los botones. OJO: el robot SE MUEVE.');
+add('sys','Agente LLM + nodo ROS 2 (rclpy). Escribe en lenguaje natural o usa los botones. OJO: el robot SE MUEVE.');
 refresh();
 </script></div></body></html>"""
 
@@ -159,10 +179,10 @@ class H(BaseHTTPRequestHandler):
 def main(port=8501):
     try:
         info = context.robot_public_info()
-        bridge = info.get('bridge', '?')
+        adapter = f"{info.get('adapter', '?')} ({info.get('ros_node', '?')})"
     except Exception:
-        bridge = '(config no cargada)'
-    print(f'chat UI en http://localhost:{port}  bridge: {bridge}', flush=True)
+        adapter = '(config no cargada)'
+    print(f'chat UI en http://localhost:{port}  ROS adapter: {adapter}', flush=True)
     _ThreadingHTTPServer(('0.0.0.0', port), H).serve_forever()
 
 

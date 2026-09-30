@@ -28,7 +28,7 @@ class ParamSpec:
 
 
 @dataclass(frozen=True)
-class BridgeAction:
+class RosAction:
     op: Literal['read_state', 'move_joints', 'home', 'init', 'gripper', 'torque']
     present: Literal['joints', 'pose_2d', 'raw'] | None = None
     include_gripper: bool = False
@@ -42,7 +42,7 @@ class BridgeAction:
     torque_param: str = 'on'
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> BridgeAction:
+    def from_dict(cls, data: dict[str, Any]) -> RosAction:
         return cls(
             op=str(data['op']),
             present=data.get('present'),
@@ -63,14 +63,14 @@ class ToolSpec:
     name: str
     description: str
     parameters: tuple[ParamSpec, ...] = ()
-    bridge: BridgeAction | None = None
+    bridge: RosAction | None = None
     ros_refs: tuple[str, ...] = ()
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> ToolSpec:
         params = tuple(ParamSpec.from_dict(p) for p in (data.get('parameters') or []))
         bridge_raw = data.get('bridge')
-        bridge = BridgeAction.from_dict(bridge_raw) if bridge_raw else None
+        bridge = RosAction.from_dict(bridge_raw) if bridge_raw else None
         ros_refs = tuple(str(x) for x in (data.get('ros_refs') or []))
         return cls(
             name=str(data['name']),
@@ -90,3 +90,6 @@ class ToolSpec:
             },
             sort_keys=True,
         )
+
+
+BridgeAction = RosAction

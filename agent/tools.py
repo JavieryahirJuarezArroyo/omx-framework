@@ -1,11 +1,41 @@
-"""Fachada al adapter activo (configurable por robot)."""
+"""Fachada al adapter ROS 2 activo."""
 from __future__ import annotations
 
-from .context import get_adapter, get_profile
+from .context import ensure_ros_adapter, get_adapter, get_profile
 
 
-def bridge_url() -> str:
-    return get_adapter()._config.base_url
+def adapter_info() -> dict:
+    from .context import adapter_public_info
+
+    return adapter_public_info()
+
+
+def get_state():
+    return ensure_ros_adapter().get_state()
+
+
+def health():
+    return ensure_ros_adapter().health()
+
+
+def move_joints(q, seconds=4.0):
+    return ensure_ros_adapter().move_joints(list(q), seconds)
+
+
+def home():
+    return ensure_ros_adapter().home()
+
+
+def init():
+    return ensure_ros_adapter().init()
+
+
+def gripper(open01, seconds=2.0):
+    return ensure_ros_adapter().gripper(open01, seconds)
+
+
+def torque(on: bool):
+    return ensure_ros_adapter().torque(on)
 
 
 def get_limits():
@@ -14,34 +44,6 @@ def get_limits():
 
 def get_joint_names():
     return get_profile().joint_names
-
-
-def get_state():
-    return get_adapter().get_state()
-
-
-def health():
-    return get_adapter().health()
-
-
-def move_joints(q, seconds=4.0):
-    return get_adapter().move_joints(list(q), seconds)
-
-
-def home():
-    return get_adapter().home()
-
-
-def init():
-    return get_adapter().init()
-
-
-def gripper(open01, seconds=2.0):
-    return get_adapter().gripper(open01, seconds)
-
-
-def torque(on: bool):
-    return get_adapter().torque(on)
 
 
 def read_arm_positions(state: dict | None = None) -> list[float]:

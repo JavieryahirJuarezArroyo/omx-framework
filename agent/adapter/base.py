@@ -1,4 +1,4 @@
-"""Contrato de conexión al robot (ROS vía bridge, servicio, etc.)."""
+"""Contrato de conexión al robot (ROS 2 vía rclpy)."""
 from __future__ import annotations
 
 from typing import Protocol, runtime_checkable

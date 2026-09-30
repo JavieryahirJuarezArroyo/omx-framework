@@ -1,7 +1,7 @@
 [project]
 name = "ros-agent-framework"
 version = "0.3.0"
-description = "LangGraph agent framework for ROS robots via HTTP bridge (robot-agnostic config)"
+description = "LangGraph agent framework for ROS 2 robots (rclpy in-process, robot-agnostic config)"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = []
@@ -12,6 +12,7 @@ agent = [
     "langchain-core>=1.0.0",
     "langchain-openai>=0.3.0",
     "langchain-groq>=0.2.0",
+    "langchain-google-genai>=2.0.0",
 ]
 
 [project.scripts]

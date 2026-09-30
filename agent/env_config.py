@@ -7,6 +7,9 @@ from pathlib import Path
 _DOTENV_KEYS = frozenset(
     {
         'LLM_PROVIDER',
+        'GOOGLE_API_KEY',
+        'GEMINI_API_KEY',
+        'GEMINI_MODEL',
         'GROQ_API_KEY',
         'GROQ_MODEL',
         'OPENAI_API_KEY',
@@ -39,7 +42,8 @@ def load_agent_dotenv() -> None:
         key = key.strip()
         value = value.strip()
         if key in _DOTENV_KEYS:
-            os.environ[key] = value
+            if not os.environ.get(key):
+                os.environ[key] = value
         else:
             os.environ.setdefault(key, value)
     configure_langsmith_tracing()
@@ -82,7 +86,6 @@ _ENV_KEYS: dict[str, list[str]] = {
     'TOL': ['ROS_AGENT_TOL', 'OMX_TOL'],
     'ROBOT': ['ROS_AGENT_ROBOT', 'OMX_ROBOT'],
     'CONFIG': ['ROS_AGENT_CONFIG', 'OMX_CONFIG'],
-    'BRIDGE': ['ROS_AGENT_BRIDGE', 'OMX_BRIDGE', 'OMX_BRIDGE_URL'],
 }
 
 

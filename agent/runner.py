@@ -22,7 +22,7 @@ def llm_status() -> dict:
 def _require_llm_config() -> None:
     if not has_llm_credentials():
         raise RuntimeError(
-            'Falta API key: GROQ_API_KEY o OPENAI_API_KEY en agent/.env'
+            'Falta API key: GOOGLE_API_KEY, GROQ_API_KEY u OPENAI_API_KEY en agent/.env'
         )
 
 

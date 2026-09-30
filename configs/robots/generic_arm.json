@@ -22,15 +22,30 @@
     "init": true
   },
   "adapter": {
-    "type": "http",
-    "base_url": "http://localhost:8000"
+    "type": "ros2",
+    "node_name": "ros_agent_bridge"
   },
   "agent": {
     "tools": "auto",
+    "introspection": true,
     "ros": {
+      "interfaces": [
+        {
+          "kind": "topic_sub",
+          "name": "/joint_states",
+          "msg_type": "sensor_msgs/msg/JointState"
+        }
+      ],
       "state": { "representation": "joints" },
-      "motion": { "kind": "joint_positions" }
+      "motion": { "kind": "joint_positions" },
+      "bindings": {
+        "state_topic": "/joint_states",
+        "trajectory": {
+          "name": "/arm_controller/follow_joint_trajectory",
+          "type": "control_msgs/action/FollowJointTrajectory"
+        }
+      }
     },
-    "system_prompt_extra": "Ajusta limits y DOF a tu URDF; el bridge debe implementar el contrato REST estándar."
+    "system_prompt_extra": "Ajusta limits, DOF y bindings.trajectory.name a tu bringup ROS 2."
   }
 }

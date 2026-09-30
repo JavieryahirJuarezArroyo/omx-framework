@@ -41,6 +41,7 @@ class RobotProfile:
     tool_specs: tuple[ToolSpec, ...] = ()
     agent_rules: tuple[str, ...] = ()
     tools_fingerprint: str = ''
+    introspection: bool = False
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> RobotProfile:
@@ -95,6 +96,7 @@ class RobotProfile:
         )
         fp_src = '|'.join(t.fingerprint() for t in tool_specs)
         tools_fp = hashlib.sha256(fp_src.encode()).hexdigest()[:16]
+        introspection = bool(agent_raw.get('introspection', False))
         return cls(
             id=profile_stub.id,
             display_name=profile_stub.display_name,
@@ -112,6 +114,7 @@ class RobotProfile:
             tool_specs=tool_specs,
             agent_rules=agent_rules,
             tools_fingerprint=tools_fp,
+            introspection=introspection,
         )
 
 

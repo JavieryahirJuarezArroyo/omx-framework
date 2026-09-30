@@ -1,8 +1,11 @@
-"""Modelo agent.ros del perfil (interfaces + state + motion)."""
+"""Modelo agent.ros del perfil (interfaces + state + motion + bindings)."""
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
+
+if TYPE_CHECKING:
+    from .ros_bindings import RosBindings
 
 
 @dataclass(frozen=True)
@@ -80,6 +83,7 @@ class AgentRosSchema:
     interfaces: tuple[RosInterfaceEntry, ...]
     state: RosStateSchema
     motion: RosMotionSchema
+    bindings_raw: dict[str, Any] | None = None
 
     @classmethod
     def from_agent_ros(cls, ros_raw: dict[str, Any] | None) -> AgentRosSchema:
@@ -96,11 +100,20 @@ class AgentRosSchema:
                 interfaces.append(RosInterfaceEntry('topic_pub', str(name), ''))
             for name in ros_raw.get('services') or []:
                 interfaces.append(RosInterfaceEntry('service', str(name), ''))
+        bindings_raw = ros_raw.get('bindings')
+        if bindings_raw is not None and not isinstance(bindings_raw, dict):
+            bindings_raw = None
         return cls(
             interfaces=tuple(interfaces),
             state=RosStateSchema.from_dict(ros_raw.get('state')),
             motion=RosMotionSchema.from_dict(ros_raw.get('motion')),
+            bindings_raw=bindings_raw,
         )
+
+    def bindings_for(self, profile: 'RobotProfile') -> 'RosBindings':
+        from .ros_bindings import resolve_bindings
+
+        return resolve_bindings(self, profile, self.bindings_raw)
 
     def interface_names_by_kind(self, kind: str) -> tuple[str, ...]:
         return tuple(i.name for i in self.interfaces if i.kind == kind)

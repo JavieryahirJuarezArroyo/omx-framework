@@ -34,7 +34,7 @@ def _read_tool(schema: AgentRosSchema, profile: RobotProfile) -> ToolSpec:
         name = 'get_pose'
         desc = (
             f'Lee posición 2D de {profile.display_name} '
-            f'({", ".join(profile.joint_names)}). Unidades según perfil del bridge.'
+            f'({", ".join(profile.joint_names)}). Unidades según perfil ROS.'
         )
     else:
         name = 'get_robot_state'
@@ -145,7 +145,7 @@ def _home_tool(schema: AgentRosSchema, profile: RobotProfile) -> ToolSpec | None
     pose = schema.state.representation == 'pose_2d'
     name = 'reset_sim' if pose else 'go_home'
     desc = (
-        'Reinicia simulación / pose inicial del mapa (servicio reset del bridge).'
+        'Reinicia simulación / pose inicial del mapa (servicio reset ROS).'
         if pose
         else f'Lleva {profile.display_name} a la postura home del perfil JSON.'
     )

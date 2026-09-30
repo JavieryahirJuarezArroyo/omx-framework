@@ -22,12 +22,15 @@ def get_agent_tools() -> list[StructuredTool]:
     key = f'{p.id}:{p.tools_fingerprint}'
     if _tools_cache is not None and _tools_cache_key == key:
         return _tools_cache
-    get_adapter()
     if not p.tool_specs:
         raise ValueError(
             f'Robot {p.id}: sin tools. Define agent.ros y agent.tools="auto" en el JSON.'
         )
     built = build_all_tools(p.tool_specs)
+    if p.introspection:
+        from .tools_ros_cli import build_introspection_tools
+
+        built = built + build_introspection_tools()
     _tools_cache = built
     _tools_cache_key = key
     return _tools_cache

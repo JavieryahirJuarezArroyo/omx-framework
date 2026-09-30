@@ -32,7 +32,7 @@ def build_system_prompt() -> str:
     p = get_profile()
     header = (
         f'Eres el agente ROS de {p.display_name} (id={p.id}). '
-        f'Control vía bridge HTTP; el framework generó las tools desde agent.ros.'
+        f'Control directo vía rclpy (mismo proceso ROS 2); tools generadas desde agent.ros.'
     )
     rules = '\n'.join(f'- {r}' for r in p.agent_rules)
     parts = [

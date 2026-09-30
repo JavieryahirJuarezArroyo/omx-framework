@@ -1,4 +1,4 @@
-"""Ejecuta ToolSpec contra el bridge HTTP y construye StructuredTool."""
+"""Ejecuta ToolSpec contra el adapter ROS 2 y construye StructuredTool."""
 from __future__ import annotations
 
 import json
@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field, create_model
 
 from . import safety, tools
 from .context import get_profile
-from .tool_spec import BridgeAction, ParamSpec, ToolSpec
+from .tool_spec import ParamSpec, RosAction, ToolSpec
 
 
 def _read_positions() -> list[float]:
@@ -36,7 +36,7 @@ def _resolve_joints(template: Any, kwargs: dict[str, Any], dof: int) -> list[flo
     raise ValueError(f'joints_template inválido: {template}')
 
 
-def _execute_bridge(action: BridgeAction, tool_name: str, kwargs: dict[str, Any]) -> str:
+def _execute_ros(action: RosAction, tool_name: str, kwargs: dict[str, Any]) -> str:
     p = get_profile()
     op = action.op
 
@@ -153,7 +153,7 @@ def _execute_bridge(action: BridgeAction, tool_name: str, kwargs: dict[str, Any]
         except Exception as e:
             return f'{tool_name} falló: {e}'
 
-    return f'op bridge desconocida: {op}'
+    return f'op ROS desconocida: {op}'
 
 
 def _pydantic_type(param: ParamSpec) -> Any:
@@ -185,19 +185,19 @@ def _args_model(spec: ToolSpec) -> type[BaseModel]:
 def _make_callable(spec: ToolSpec) -> Callable:
     action = spec.bridge
     if action is None:
-        raise ValueError(f'tool {spec.name} sin bridge')
+        raise ValueError(f'tool {spec.name} sin acción ROS')
 
     if not spec.parameters:
 
         def fn() -> str:
-            return _execute_bridge(action, spec.name, {})
+            return _execute_ros(action, spec.name, {})
 
         fn.__name__ = spec.name
         fn.__doc__ = spec.description
         return fn
 
     def fn(**kwargs: Any) -> str:
-        return _execute_bridge(action, spec.name, kwargs)
+        return _execute_ros(action, spec.name, kwargs)
 
     fn.__name__ = spec.name
     fn.__doc__ = spec.description

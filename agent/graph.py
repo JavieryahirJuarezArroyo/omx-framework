@@ -19,6 +19,30 @@ _sessions: dict[str, list] = {}
 _graph_robot_id: str | None = None
 
 
+def _message_content_text(content: Any) -> str:
+    """Gemini (y otros) devuelven content como str o lista de bloques."""
+    if content is None:
+        return ''
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts: list[str] = []
+        for block in content:
+            if isinstance(block, str):
+                parts.append(block)
+            elif isinstance(block, dict):
+                if block.get('type') == 'text' and block.get('text'):
+                    parts.append(str(block['text']))
+                elif block.get('text') is not None:
+                    parts.append(str(block['text']))
+            else:
+                text = getattr(block, 'text', None)
+                if text is not None:
+                    parts.append(str(text))
+        return '\n'.join(p for p in parts if p)
+    return str(content)
+
+
 def reset_graph() -> None:
     global _graph, _graph_robot_id, _sessions
     _graph = None
@@ -70,7 +94,7 @@ def run_agent(user_text: str, session_id: str | None = None) -> str:
     load_agent_dotenv()
     sid = session_id or 'default'
     if not has_llm_credentials():
-        raise RuntimeError('GROQ_API_KEY u OPENAI_API_KEY requerida (agent/.env).')
+        raise RuntimeError('GOOGLE_API_KEY, GROQ_API_KEY u OPENAI_API_KEY requerida (agent/.env).')
     messages = _session_messages(sid)
     if isinstance(messages[0], SystemMessage):
         messages[0] = SystemMessage(content=build_system_prompt())
@@ -81,5 +105,6 @@ def run_agent(user_text: str, session_id: str | None = None) -> str:
     _sessions[sid] = list(result['messages'])
     last = result['messages'][-1]
     if isinstance(last, AIMessage):
-        return (last.content or '').strip() or '(sin respuesta textual)'
+        text = _message_content_text(last.content).strip()
+        return text or '(sin respuesta textual)'
     return str(last)

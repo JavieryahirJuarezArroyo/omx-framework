@@ -24,11 +24,12 @@
     "init": true
   },
   "adapter": {
-    "type": "http",
-    "base_url": "http://localhost:8000"
+    "type": "ros2",
+    "node_name": "ros_agent_bridge"
   },
   "agent": {
     "tools": "auto",
+    "introspection": true,
     "ros": {
       "interfaces": [
         {
@@ -38,8 +39,26 @@
         }
       ],
       "state": { "representation": "joints" },
-      "motion": { "kind": "joint_positions", "duration_param": "seconds" }
+      "motion": { "kind": "joint_positions", "duration_param": "seconds" },
+      "bindings": {
+        "state_topic": "/joint_states",
+        "joint_state_joint_names": ["joint1", "joint2", "joint3", "joint4", "joint5"],
+        "trajectory": {
+          "name": "/arm_controller/follow_joint_trajectory",
+          "type": "control_msgs/action/FollowJointTrajectory",
+          "joint_names": ["joint1", "joint2", "joint3", "joint4", "joint5"]
+        },
+        "gripper": {
+          "kind": "action",
+          "name": "/gripper_controller/gripper_cmd",
+          "type": "control_msgs/action/GripperCommand"
+        },
+        "torque": {
+          "name": "/dynamixel_hardware_interface/set_dxl_torque",
+          "type": "std_srvs/srv/SetBool"
+        }
+      }
     },
-    "system_prompt_extra": "Brazo serial ROBOTIS vía bridge ROS 2 en Docker."
+    "system_prompt_extra": "Brazo serial ROBOTIS vía rclpy en el mismo proceso ROS 2."
   }
 }
